@@ -2,8 +2,10 @@
 #include "Cannon.h"
 
 Cannon::Cannon()
-	: scale(0.08f),
-	  angle(0)
+	: scale(0.08f)
+	, angle(0)
+	, posX(512)
+	, posY(100)
 {
 	Init();
 }
@@ -57,16 +59,18 @@ void Cannon::Update(float dt)
 	IPoint mouse_pos = Core::mainInput.GetMousePos();
 
 	if ((mouse_pos.x - position.x) != 0) 
-	{
-			angle = math::atan((mouse_pos.y - position.y), (mouse_pos.x - position.x)) * 180.0f / math::PI - 90;
-	}
+		angle = math::atan((mouse_pos.y - position.y), (mouse_pos.x - position.x)) * 180.0f / math::PI - 90;
 }
 
-bool Cannon::MouseDown(const IPoint& pos, int speed)
+void Cannon::MouseDown(const IPoint& pos, int speed, EffectsContainer& effCont)
 {
 	cannonballs.push_back(new Cannonball(scale, speed, angle));
 
-	return false;
+	ParticleEffectPtr eff = effCont.AddEffect("Shoot");
+	eff->posX = posX + 50*math::cos((angle + 90)*math::PI / 180);
+	eff->posY = posY + 50*math::sin((angle + 90)* math::PI / 180);
+	eff->Reset();
+	eff->Finish();
 }
 
 int Cannon::countCannonball() const
@@ -77,9 +81,7 @@ int Cannon::countCannonball() const
 void Cannon::Clear()
 {
 	for (auto cannonball : cannonballs)
-	{
 		delete cannonball;
-	}
 
 	cannonballs.clear();
 }

@@ -11,7 +11,7 @@ public:
 	void Draw();
 	void Update(float dt);
 
-	bool MouseDown(const IPoint& pos, int speed);
+	void MouseDown(const IPoint& pos, int speed, EffectsContainer& eff);
 
 	int countCannonball() const;
 	void Clear();
@@ -28,6 +28,9 @@ private:
 	float scale;
 	float angle;
 	
+	const float posX;
+	const float posY;
+
 	std::vector<Cannonball*> cannonballs;
 };
 

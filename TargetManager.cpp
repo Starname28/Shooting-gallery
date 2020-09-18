@@ -31,10 +31,10 @@ void TargetManager::Update(float dt)
 		target->Update(dt);
 }
 
-bool TargetManager::IsHit(FPoint posArrow, EffectsContainer& eff)
+bool TargetManager::IsHit(FPoint cannonballPos, EffectsContainer& eff)
 {
 	for (int i = targets.size() - 1; i >= 0; i--)
-		if (!targets[i]->GetHit() && targets[i]->IsHit(posArrow, eff))
+		if (!targets[i]->GetHit() && targets[i]->IsHit(cannonballPos, eff))
 		{
 			delete targets[i];
 			targets.erase(targets.begin() + i);
@@ -54,8 +54,13 @@ void TargetManager::Clear()
 	targets.clear();
 }
 
-int TargetManager::GetCurrentCountTarget()
+int TargetManager::GetCountTarget()
 {
 	return targets.size();
+}
+
+void TargetManager::SetCount(size_t count)
+{
+	this->count = count;
 }
 

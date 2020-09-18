@@ -12,9 +12,10 @@ public:
 	void Draw();
 	void Update(float dt);
 
-	bool IsHit(FPoint posArrow, EffectsContainer& eff);
+	bool IsHit(FPoint cannonballPos, EffectsContainer& eff);
 	void Clear();
-	int GetCurrentCountTarget();
+	int GetCountTarget();
+	void SetCount(size_t count);
 
 private:
 	std::vector <Target*> targets;

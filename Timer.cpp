@@ -24,8 +24,8 @@ void Timer::SetEndTime(float end)
 
 int Timer::TimeNow()
 {
-	auto finish = steady_clock::now();
-	auto dur = finish - start;
+	auto now = steady_clock::now();
+	auto dur = now - start;
 
 	timeNow = duration_cast<seconds>(dur).count();
 	

@@ -12,6 +12,8 @@ GameWidget::GameWidget(const std::string& name, rapidxml::xml_node<>* elem)
 	, scaleTextBelow(0.01)
 	, stepScaleText(0.005)
 	, isLess(true)
+	, level(1)
+	, targetsCount(0)
 	, _eff(NULL)
 	, _scale(0.f)
 	, state(GameState::START)
@@ -36,8 +38,12 @@ void GameWidget::Init()
 	timer.SetEndTime(parser.time);
 	timer.Start();
 
-	_tex5 = Core::resourceManager.Get<Render::Texture>("Aim");
+	aim = Core::resourceManager.Get<Render::Texture>("Aim");
 	clock = Core::resourceManager.Get<Render::Texture>("Clock");
+	trophy = Core::resourceManager.Get<Render::Texture>("Trophy");
+
+	targetsCount = parser.countTarget;
+
 	_curTex = 0;
 	_angle = 0;
 }
@@ -45,30 +51,24 @@ void GameWidget::Init()
 void GameWidget::EndDisplay(GameState gameState, const std::string& font, const std::string& inscription)
 {
 	state = gameState;
-	const int countTarget = parser.countTarget;
 	ScaleText();
+
+	auto pred = [&gameState]() {
+		return (gameState == GameState::WIN) ? "Press ENTER for start next level or" : "Press ENTER or";
+	};
 
 	if (!Render::isFontLoaded(font))
 		return;
 
 	Render::BindFont(font);
 	Render::PrintString(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 3 * 2, std::string(inscription), scaleText, CenterAlign);
-	Render::PrintString(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 3 * 1.5, "Press  for restart", scaleTextBelow, CenterAlign);
-
+	Render::PrintString(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 3 * 1.5, std::string(pred()) + " SPACE for restart", scaleTextBelow*0.8, CenterAlign);
 	Render::PrintString(
 		WINDOW_WIDTH / 2, WINDOW_HEIGHT / 3 * 1.3, 
-		"Score: " + utils::lexical_cast(countTarget - targets->GetCurrentCountTarget()) + "/" + utils::lexical_cast(countTarget), 
+		"Score: " + utils::lexical_cast(targetsCount - targets->GetCountTarget()) + "/" + utils::lexical_cast(targetsCount),
 		scaleText/2, CenterAlign);
 
 	cannon->Clear();
-
-	if (Core::mainInput.GetMouseRightButton())
-	{
-		state = GameState::GAME;
-		targets->Clear();
-		timer.Start();
-		targets->Init();
-	}
 }
 
 void GameWidget::ScaleText()
@@ -109,16 +109,47 @@ void GameWidget::PrintText(const std::string & font, float posX, float posY, con
 	Render::PrintString(posX, posY, text, scale, CenterAlign);
 }
 
+void GameWidget::DrawScaleText(Render::Texture* tex, float posX, float posY, float scale)
+{
+	Render::device.PushMatrix();
+
+	Render::device.MatrixTranslate(math::Vector3(posX, posY, 0));
+	Render::device.MatrixRotate(math::Vector3(0, 0, 1), 0);
+
+	IRect texRect = tex->getBitmapRect();
+	FRect rect(texRect), uv(0, 1, 0, 1);
+
+	Render::device.MatrixScale(scale);
+	Render::device.MatrixTranslate(math::Vector3(-texRect.width / 2.0f, -texRect.height / 2.0f, 0.0f));
+
+	tex->Bind();
+
+	Render::DrawQuad(rect, uv);
+
+	Render::device.PopMatrix();
+}
+
+void GameWidget::Restart()
+{
+	DefaultSettingsText();
+
+	state = GameState::GAME;
+	targets->Clear();
+	timer.Start();
+
+	targets->Init();
+}
+
 void GameWidget::Draw()
 {
 	background->Draw();
 
 	if (state != GameState::START)
 	{
+		targets->Draw();
 		//
 		// Получаем текущее положение курсора мыши.
 		//
-
 		IPoint mouse_pos = Core::mainInput.GetMousePos();
 
 		//
@@ -140,7 +171,7 @@ void GameWidget::Draw()
 		//
 		// При вызове метода Texture::Draw() вызывать Texture::Bind() необязательно.
 		//
-		IRect texRect = _tex5->getBitmapRect();
+		IRect texRect = aim->getBitmapRect();
 
 		//
 		// При отрисовке текстуры можно вручную задавать UV координаты той части текстуры,
@@ -154,7 +185,7 @@ void GameWidget::Draw()
 		FRect rect(texRect);
 		FRect uv(0, 1, 0, 1);
 
-		_tex5->TranslateUV(rect, uv);
+		aim->TranslateUV(rect, uv);
 
 		Render::device.MatrixScale(0.7 * _scale);
 		Render::device.MatrixTranslate(-texRect.width * 0.5f, -texRect.height * 0.5f, 0.0f);
@@ -162,7 +193,7 @@ void GameWidget::Draw()
 		//
 		// Привязываем текстуру.
 		//
-		_tex5->Bind();
+		aim->Bind();
 
 		//
 		// Метод DrawQuad() выводит в графическое устройство квадратный спрайт, состоящий их двух
@@ -210,48 +241,41 @@ void GameWidget::Draw()
 		//
 		// Рисуем все эффекты, которые добавили в контейнер (Update() для контейнера вызывать не нужно).
 		//
-		_effCont.Draw();
-		targets->Draw();
+		
 		cannon->Draw();
+		_effCont.Draw();
 
 		PrintText("arial", 924 + 100 / 2, 35, utils::lexical_cast(mouse_pos.x) + ", " + utils::lexical_cast(mouse_pos.y), 1.f);
 
-		if (!timer.IsTimeEnd() && targets->GetCurrentCountTarget() != 0)
+		if (!timer.IsTimeEnd() && targets->GetCountTarget() != 0)
 		{
+			DrawScaleText(clock, WINDOW_WIDTH / 2 - 50, WINDOW_HEIGHT - 40, 0.3);
 
-			Render::device.PushMatrix();
-
-			Render::device.MatrixTranslate(math::Vector3(WINDOW_WIDTH / 2 - 50, WINDOW_HEIGHT - 40, 0));
-			Render::device.MatrixRotate(math::Vector3(0, 0, 1), 0);
-
-			IRect texRect = clock->getBitmapRect();
-			FRect rect(texRect), uv(0, 1, 0, 1);
-
-			Render::device.MatrixScale(0.3);
-			Render::device.MatrixTranslate(math::Vector3(-texRect.width / 2.0f, -texRect.height / 2.0f, 0.0f));
-
-			clock->Bind();
-
-			Render::DrawQuad(rect, uv);
-
-			Render::device.PopMatrix();
-
-			PrintText("lemon_regular", WINDOW_WIDTH / 2+30, WINDOW_HEIGHT - 10, 
+			PrintText("lemon_regular", WINDOW_WIDTH / 2 + 30, WINDOW_HEIGHT - 10, 
 				utils::lexical_cast(timer.TimeNow()) + std::string("/") + utils::lexical_cast(timer.GetEndTime()), 1.0f);
 
 			Render::BindFont("lemon_regular");
 			Render::PrintString(
 				WINDOW_WIDTH / 6 - 150, WINDOW_HEIGHT - 10,
-				std::string("Target count: ") + utils::lexical_cast(targets->GetCurrentCountTarget()),
+				std::string("Target count: ") + utils::lexical_cast(targets->GetCountTarget()),
 				1.f, LeftAlign);
 		}
-		else if (targets->GetCurrentCountTarget() == 0)
+		else if (targets->GetCountTarget() == 0)
 		{
-			EndDisplay(GameState::WIN, "emon", "!!!You win!!!");
+			EndDisplay(GameState::WIN, "emon", "You win");
+
+			DrawScaleText(trophy, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 4 * 3, 0.1 * scaleText);
+
+			Render::BindFont("lemon_regular");
+			Render::PrintString(
+				WINDOW_WIDTH / 2, WINDOW_HEIGHT / 4 * 3-30,
+				"Level: " + utils::lexical_cast(level) + " completed",
+				scaleText, CenterAlign
+			);
 		}
 		else
 		{
-			EndDisplay(GameState::LOSE, "red_emon", "!!!You lose!!!");
+			EndDisplay(GameState::LOSE, "red_emon", "Time out");
 		}
 	}
 	else
@@ -265,9 +289,9 @@ void GameWidget::Draw()
 		PrintText("starborn", posX, posY * 1.85, "Shooting gallery", scaleText);
 		PrintText("starborn", posX, posY * 1.55, "with balloons", scaleText * 0.7);
 
-		if (targets->GetCurrentCountTarget() != 0)
+		if (targets->GetCountTarget() > 0)
 		{
-			PrintText("min_starborn", posX, posY * 1.2, "Press RMB for start game", scaleTextBelow);
+			PrintText("min_starborn", posX, posY * 1.2, "Press ENTER for start game", scaleTextBelow);
 			countTargetMoreZero = true;
 		}
 		else
@@ -346,16 +370,7 @@ bool GameWidget::MouseDown(const IPoint& mouse_pos)
 		{
 			_angle -= 360;
 		}*/
-		DefaultSettingsText();
 
-		if(countTargetMoreZero)
-			state = GameState::GAME;
-		
-		if (firstCall)
-		{
-			firstCall = false;
-			Init();
-		}
 	}
 	else
 	{
@@ -363,7 +378,7 @@ bool GameWidget::MouseDown(const IPoint& mouse_pos)
 		// При нажатии на левую кнопку мыши, создаём временный эффект, который завершится сам.
 		//
 		if (state == GameState::GAME)
-			cannon->MouseDown(mouse_pos, parser.cannonballSpeed);
+			cannon->MouseDown(mouse_pos, parser.cannonballSpeed, _effCont);
 		else if (state == GameState::WIN || state == GameState::LOSE)
 		{
 			ParticleEffectPtr eff = _effCont.AddEffect("FindItem2");
@@ -418,9 +433,32 @@ void GameWidget::KeyPressed(int keyCode)
 	// keyCode - виртуальный код клавиши.
 	// В качестве значений для проверки нужно использовать константы VK_.
 	//
+	if (state != GameState::GAME)
+	{
+		if (keyCode == VK_RETURN) {
+			// Реакция на нажатие кнопки A
+			//if (countTargetMoreZero)
+			//	state = GameState::GAME;
+			if (firstCall)
+			{
+				firstCall = false;
+				Init();
+			}
+			if (state == GameState::WIN)
+			{
+				++level;
+				targetsCount = parser.countTarget + 2 * level;
+				targets->SetCount(targetsCount);
+				timer.SetEndTime(parser.time - 2 * level);
+			}
 
-	if (keyCode == VK_A) {
-		// Реакция на нажатие кнопки A
+			Restart();
+		}
+		else if (keyCode == VK_SPACE)
+		{
+			if(!firstCall)
+				Restart();
+		}
 	}
 }
 
@@ -431,6 +469,7 @@ void GameWidget::CharPressed(int unicodeChar)
 	//
 
 	if (unicodeChar == L'а') {
+		exit(1);
 		// Реакция на ввод символа 'а'
 	}
 }

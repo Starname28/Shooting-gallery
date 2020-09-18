@@ -33,6 +33,8 @@ private:
 	void ScaleText();
 	void DefaultSettingsText();
 	void PrintText(const std::string& font, float posX, float posY, const std::string& text, float scale);
+	void DrawScaleText(Render::Texture* tex, float posX, float posY, float scale);
+	void Restart();
 
 	float _timer;
 
@@ -46,12 +48,14 @@ private:
 
 	std::unique_ptr<TargetManager> targets;
 	std::unique_ptr<Cannon> cannon;
-	
 
 	Render::Texture* background;
-	Render::Texture* _tex5;
+	Render::Texture* aim;
 	Render::Texture* clock;
+	Render::Texture* trophy;
 	int _curTex;
+	int level;
+	int targetsCount;
 
 	EffectsContainer _effCont;
 	ParticleEffectPtr _eff;

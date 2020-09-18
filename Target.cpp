@@ -8,11 +8,11 @@ Target::Target(FPoint position, float minSize, float maxSize)
 	, is_hit(false)
 	, target(Core::resourceManager.Get<Render::Texture>(randomTex()))
 {
-	speedVec.x = random(-1.0f, 1.0f);
-	speedVec.y = sqrt(1 - speedVec.x * speedVec.x);
+	dSpeed.x = random(-1.0f, 1.0f);
+	dSpeed.y = sqrt(1 - dSpeed.x * dSpeed.x);
 
-	speedVec.x *= speed;
-	speedVec.y *= speed;
+	dSpeed.x *= speed;
+	dSpeed.y *= speed;
 }
 
 Target::~Target()
@@ -44,20 +44,20 @@ void Target::Update(float dt)
 {
 	IRect texRect = target->getBitmapRect();
 
-	if ((position.x + speedVec.x * dt) > (1024 - texRect.width * scale) ||
-		((position.x + speedVec.x * dt) < (texRect.width * scale))) 
+	if ((position.x + dSpeed.x * dt) > (1024 - texRect.width * scale) ||
+		((position.x + dSpeed.x * dt) < (texRect.width * scale)))
 	{
-		speedVec.x = - speedVec.x;
+		dSpeed.x = -dSpeed.x;
 	}
 
-	if ((position.y + speedVec.y * dt) > (768 - texRect.height * scale) ||
-		((position.y + speedVec.y * dt) < (texRect.height * scale + 100))) 
+	if ((position.y + dSpeed.y * dt) > (768 - texRect.height * scale) ||
+		((position.y + dSpeed.y * dt) < (texRect.height * scale + 100)))
 	{
-		speedVec.y = -speedVec.y;
+		dSpeed.y = -dSpeed.y;
 	}
 
-	position.x += speedVec.x * dt;
-	position.y += speedVec.y * dt;
+	position.x += dSpeed.x * dt;
+	position.y += dSpeed.y * dt;
 
 	if (is_hit) {
 		scale = 0;
@@ -75,7 +75,7 @@ bool Target::IsHit(FPoint cannonballPos, EffectsContainer &effCont)
 	{
 		is_hit = true;
 
-		ParticleEffectPtr eff = effCont.AddEffect("Bang");
+		ParticleEffectPtr eff = effCont.AddEffect("BoomBalloons");
 		eff->posX = position.x + 0.f;
 		eff->posY = position.y + 0.f;
 		eff->Reset();

@@ -18,22 +18,17 @@ void Cannonball::Draw()
 	if (!isHit) 
 	{
 		Render::device.PushMatrix();
-		// Сдвигаем на текущую позицию
 		Render::device.MatrixTranslate(math::Vector3(position.x, position.y, 0));
-		// Поворачиваем на нужный угол
 		Render::device.MatrixRotate(math::Vector3(0, 0, 1), angle);
 
-		// Получаем ширину текстуры
 		IRect texRect = cannonball->getBitmapRect();
 		FRect rect(texRect), uv(0, 1, 0, 1);
 		cannonball->TranslateUV(rect, uv);
 
-		// Устанавливаем масштаб текстуры
 		Render::device.MatrixScale(scale);
-		// Сдвигаем на cannonball
+
 		Render::device.MatrixTranslate(math::Vector3(-texRect.width / 2.f, -texRect.height, 0.f));
 
-		// Натягиваем текстуру
 		cannonball->Bind();
 		Render::DrawQuad(rect, uv);
 

@@ -21,11 +21,10 @@ private:
 	float random(float min, float max);
 	std::string randomTex();
 
-
 	Render::Texture* target;
 
 	FPoint position;
-	FPoint speedVec;
+	FPoint dSpeed;
 
 	float speed;
 	float scale;
