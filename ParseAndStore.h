@@ -14,11 +14,14 @@ struct ParseAndStore
 	float minTargetSize, maxTargetSize;
 	float time;
 	float countTarget;
+	float level;
 
 private:
 	void Store();
 	void setValue(const std::string& key, float& value);
+	void Reading(std::ifstream& in);
 
 	std::map<std::string, float> allData;
-	std::string path;
+	const std::string pathFirst;
+	const std::string pathSecond;
 };

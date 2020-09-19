@@ -2,10 +2,11 @@
 #include "Cannon.h"
 #include "ParseAndStore.h"
 #include "Timer.h"
+#include "Saver.h"
 
 #include <memory>
 
-enum GameState { START = 0, GAME, LOSE, WIN };
+enum GameState { START = 0, GAME, LOSE, WIN, GAMEOVER };
 
 class GameWidget : public GUI::Widget
 {
@@ -35,6 +36,7 @@ private:
 	void PrintText(const std::string& font, float posX, float posY, const std::string& text, float scale);
 	void DrawScaleText(Render::Texture* tex, float posX, float posY, float scale);
 	void Restart();
+	void FirstCall();
 
 	float _timer;
 
@@ -55,6 +57,7 @@ private:
 	Render::Texture* trophy;
 	int _curTex;
 	int level;
+	const int maxLevel;
 	int targetsCount;
 
 	EffectsContainer _effCont;
@@ -62,6 +65,7 @@ private:
 
 	ParseAndStore parser;
 	Timer timer;
+	Saver saver;
 
 	GameState state;
 

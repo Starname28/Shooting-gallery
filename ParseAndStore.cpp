@@ -9,7 +9,9 @@ ParseAndStore::ParseAndStore()
 	, maxTargetSize(0.0f)
 	, time(0.0f)
 	, countTarget(0.0f)
-	, path("..//GameSettings.txt")
+	, level(0.0f)
+	, pathFirst("..//GameSettings.txt")
+	, pathSecond("..//Level.txt")
 {
 }
 
@@ -19,18 +21,10 @@ ParseAndStore::~ParseAndStore()
 
 void ParseAndStore::Parse()
 {
-	std::ifstream in(path);
+	std::ifstream in(pathFirst), inLevel(pathSecond);
 
-	if (in.is_open())
-	{
-		std::string nameSetting;
-		float num;
-
-		while (in >> nameSetting >> num)
-			allData[nameSetting] = num;
-	}
-
-	in.close();
+	Reading(in);
+	Reading(inLevel);
 
 	Store();
 }
@@ -52,10 +46,26 @@ void ParseAndStore::Store()
 				setValue(nameSetting, maxTargetSize);
 			else if (nameSetting == "Time:")
 				setValue(nameSetting, time);
+			else if (nameSetting == "Level:")
+				setValue(nameSetting, level);
 		}
 }
 
 void ParseAndStore::setValue(const std::string & key, float& value)
 {
 	value = allData[key];
+}
+
+void ParseAndStore::Reading(std::ifstream & in)
+{
+	if (in.is_open())
+	{
+		std::string nameSetting;
+		float num;
+
+		while (in >> nameSetting >> num)
+			allData[nameSetting] = num;
+	}
+
+	in.close();
 }

@@ -13,6 +13,7 @@ GameWidget::GameWidget(const std::string& name, rapidxml::xml_node<>* elem)
 	, stepScaleText(0.005)
 	, isLess(true)
 	, level(1)
+	, maxLevel(10)
 	, targetsCount(0)
 	, _eff(NULL)
 	, _scale(0.f)
@@ -42,7 +43,13 @@ void GameWidget::Init()
 	clock = Core::resourceManager.Get<Render::Texture>("Clock");
 	trophy = Core::resourceManager.Get<Render::Texture>("Trophy");
 
-	targetsCount = parser.countTarget;
+	targetsCount = static_cast<int>(parser.countTarget);
+	level = static_cast<int>(parser.level);
+
+	targets->Clear();
+	targetsCount = parser.countTarget + 2 * level;
+	targets->SetCount(targetsCount);
+	timer.SetEndTime(parser.time - 2 * level);
 
 	_curTex = 0;
 	_angle = 0;
@@ -52,6 +59,14 @@ void GameWidget::EndDisplay(GameState gameState, const std::string& font, const 
 {
 	state = gameState;
 	ScaleText();
+
+	if (state == GameState::GAMEOVER)
+	{
+		Render::BindFont(font);
+		Render::PrintString(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 4 * 2.5 - 30, "You complete game! Congratulations!!", scaleText*0.5, CenterAlign);
+		Render::PrintString(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 3 * 1.5 - 30, "Press Q for start new", scaleTextBelow*0.8, CenterAlign);
+		return;
+	}
 
 	auto pred = [&gameState]() {
 		return (gameState == GameState::WIN) ? "Press ENTER for start next level or" : "Press ENTER or";
@@ -138,6 +153,15 @@ void GameWidget::Restart()
 	timer.Start();
 
 	targets->Init();
+}
+
+void GameWidget::FirstCall()
+{
+	if (firstCall)
+	{
+		firstCall = false;
+		Init();
+	}
 }
 
 void GameWidget::Draw()
@@ -259,19 +283,35 @@ void GameWidget::Draw()
 				WINDOW_WIDTH / 6 - 150, WINDOW_HEIGHT - 10,
 				std::string("Target count: ") + utils::lexical_cast(targets->GetCountTarget()),
 				1.f, LeftAlign);
+			Render::PrintString(
+				WINDOW_WIDTH / 6 * 5, WINDOW_HEIGHT - 10,
+				"Level: " + utils::lexical_cast(level) + "/" + utils::lexical_cast(maxLevel),
+				1.f, CenterAlign);
 		}
 		else if (targets->GetCountTarget() == 0)
 		{
-			EndDisplay(GameState::WIN, "emon", "You win");
+			if (level == maxLevel)
+			{
+				state = GameState::GAMEOVER;
+				DrawScaleText(trophy, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 4 * 3 - 30, 0.2 * scaleText);
 
-			DrawScaleText(trophy, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 4 * 3, 0.1 * scaleText);
+				EndDisplay(GameState::GAMEOVER, "emon", "You win");
+			}
+			else
+			{
+				saver.Write(level + 1);
 
-			Render::BindFont("lemon_regular");
-			Render::PrintString(
-				WINDOW_WIDTH / 2, WINDOW_HEIGHT / 4 * 3-30,
-				"Level: " + utils::lexical_cast(level) + " completed",
-				scaleText, CenterAlign
-			);
+				EndDisplay(GameState::WIN, "emon", "You win");
+
+				DrawScaleText(trophy, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 4 * 3, 0.1 * scaleText);
+
+				Render::BindFont("lemon_regular");
+				Render::PrintString(
+					WINDOW_WIDTH / 2, WINDOW_HEIGHT / 4 * 3 - 30,
+					"Level: " + utils::lexical_cast(level) + " completed",
+					scaleText, CenterAlign
+				);
+			}
 		}
 		else
 		{
@@ -291,7 +331,7 @@ void GameWidget::Draw()
 
 		if (targets->GetCountTarget() > 0)
 		{
-			PrintText("min_starborn", posX, posY * 1.2, "Press ENTER for start game", scaleTextBelow);
+			PrintText("min_starborn", posX, posY * 1.2, "Press ENTER for continue game or Q for start new game", scaleTextBelow);
 			countTargetMoreZero = true;
 		}
 		else
@@ -379,7 +419,7 @@ bool GameWidget::MouseDown(const IPoint& mouse_pos)
 		//
 		if (state == GameState::GAME)
 			cannon->MouseDown(mouse_pos, parser.cannonballSpeed, _effCont);
-		else if (state == GameState::WIN || state == GameState::LOSE)
+		else if (state != GameState::GAME)
 		{
 			ParticleEffectPtr eff = _effCont.AddEffect("FindItem2");
 			eff->posX = mouse_pos.x + 0.f;
@@ -435,29 +475,36 @@ void GameWidget::KeyPressed(int keyCode)
 	//
 	if (state != GameState::GAME)
 	{
-		if (keyCode == VK_RETURN) {
-			// Реакция на нажатие кнопки A
-			//if (countTargetMoreZero)
-			//	state = GameState::GAME;
-			if (firstCall)
-			{
-				firstCall = false;
-				Init();
-			}
-			if (state == GameState::WIN)
-			{
-				++level;
-				targetsCount = parser.countTarget + 2 * level;
-				targets->SetCount(targetsCount);
-				timer.SetEndTime(parser.time - 2 * level);
-			}
-
-			Restart();
-		}
-		else if (keyCode == VK_SPACE)
+		switch (keyCode)
 		{
-			if(!firstCall)
+		case VK_RETURN:
+			if (state != GameState::GAMEOVER)
+			{
+				FirstCall();
+
+				if (state == GameState::WIN)
+				{
+					++level;
+					targetsCount = parser.countTarget + 2 * level;
+					targets->SetCount(targetsCount);
+					timer.SetEndTime(parser.time - 2 * level);
+				}
+
 				Restart();
+			}
+			break;
+		case VK_SPACE:
+			if (!firstCall && state != GameState::GAMEOVER)
+				Restart();
+			break;
+		case VK_Q:// || state == GameState::GAMEOVER)
+			saver.Write(1);
+			parser.Parse();
+			//FirstCall();
+			Init();
+			Restart();
+
+			break;
 		}
 	}
 }
