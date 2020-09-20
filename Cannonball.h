@@ -16,7 +16,7 @@ public:
 	void Update(float dt);
 
 	void SetHit(bool hit);
-	bool GetHit();
+	bool GetHit() const;
 
 	FPoint GetPosition();
 private:

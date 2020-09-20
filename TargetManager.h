@@ -7,6 +7,7 @@ class TargetManager
 {
 public:
 	TargetManager(int count, float minSizeTarget, float maxSizeTarget);
+	~TargetManager();
 
 	void Init();
 	void Draw();

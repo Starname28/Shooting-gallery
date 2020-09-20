@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "TestAppDelegate.h"
-//#include "TestWidget.h"
-#include "GameObject.h"
+
+#include "Game.h"
 
 TestAppDelegate::TestAppDelegate()
 {

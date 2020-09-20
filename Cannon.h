@@ -7,6 +7,7 @@ class Cannon
 {
 public:
 	Cannon();
+	~Cannon();
 	
 	void Draw();
 	void Update(float dt);

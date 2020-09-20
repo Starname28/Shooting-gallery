@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "GameObject.h"
+#include "Game.h"
 
 GameWidget::GameWidget(const std::string& name, rapidxml::xml_node<>* elem)
 	: Widget(name)
@@ -28,8 +28,6 @@ GameWidget::GameWidget(const std::string& name, rapidxml::xml_node<>* elem)
 
 GameWidget::~GameWidget()
 {
-	cannon->Clear();
-	targets->Clear();
 }
 
 void GameWidget::Init()
@@ -63,7 +61,7 @@ void GameWidget::EndDisplay(GameState gameState, const std::string& font, const 
 	if (state == GameState::GAMEOVER)
 	{
 		Render::BindFont(font);
-		Render::PrintString(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 4 * 2.5 - 30, "You complete game! Congratulations!!", scaleText*0.5, CenterAlign);
+		Render::PrintString(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 4 * 2.5 - 30, "You have completed the game! Congratulations!!", scaleText*0.45, CenterAlign);
 		Render::PrintString(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 3 * 1.5 - 30, "Press Q for start new", scaleTextBelow*0.8, CenterAlign);
 		return;
 	}
@@ -339,6 +337,7 @@ void GameWidget::Draw()
 			PrintText("min_starborn", posX, posY * 1.2, "Please enter the number of target greater than 0", scaleTextBelow);
 			countTargetMoreZero = false;
 		}
+		PrintText("min_starborn", posX, posY * 1.1, "ESC to exit", scaleTextBelow);
 	}
 }
 
@@ -401,16 +400,6 @@ bool GameWidget::MouseDown(const IPoint& mouse_pos)
 		_eff->posX = mouse_pos.x + 0.f;
 		_eff->posY = mouse_pos.y + 0.f;
 		_eff->Reset();
-
-		//
-		// И изменяем угол наклона текстуры.
-		//
-	/*	_angle += 30;
-		while (_angle > 360)
-		{
-			_angle -= 360;
-		}*/
-
 	}
 	else
 	{
@@ -497,13 +486,16 @@ void GameWidget::KeyPressed(int keyCode)
 			if (!firstCall && state != GameState::GAMEOVER)
 				Restart();
 			break;
-		case VK_Q:// || state == GameState::GAMEOVER)
+		case VK_Q:
 			saver.Write(1);
 			parser.Parse();
-			//FirstCall();
+
 			Init();
 			Restart();
 
+			break;
+		case VK_ESCAPE:
+			exit(0);
 			break;
 		}
 	}

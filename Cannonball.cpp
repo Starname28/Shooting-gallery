@@ -47,7 +47,7 @@ void Cannonball::SetHit(bool hit)
 	isHit = hit;
 }
 
-bool Cannonball::GetHit()
+bool Cannonball::GetHit() const
 {
 	return isHit;
 }

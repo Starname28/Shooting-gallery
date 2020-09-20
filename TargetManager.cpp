@@ -9,6 +9,11 @@ TargetManager::TargetManager(int count, float minSizeTarget, float maxSizeTarget
 	Init();
 }
 
+TargetManager::~TargetManager()
+{
+	Clear();
+}
+
 void TargetManager::Init()
 {
 	for (int i = 0; i < count; i++)

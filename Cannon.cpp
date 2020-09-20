@@ -10,6 +10,11 @@ Cannon::Cannon()
 	Init();
 }
 
+Cannon::~Cannon()
+{
+	Clear();
+}
+
 void Cannon::Draw()
 {
 	for (const auto& cannonball : cannonballs)

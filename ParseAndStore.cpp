@@ -31,24 +31,23 @@ void ParseAndStore::Parse()
 
 void ParseAndStore::Store()
 {
+	for (const auto& data : allData)
+	{
+		const std::string& nameSetting = data.first;
 
-		for (const auto& data : allData)
-		{
-			const std::string& nameSetting = data.first;
-
-			if (nameSetting == "CannonballSpeed:")
-				setValue(nameSetting, cannonballSpeed);
-			else if (nameSetting == "countTarget:")
-				setValue(nameSetting, countTarget);
-			else if (nameSetting == "minTargetSize:")
-				setValue(nameSetting, minTargetSize);
-			else if (nameSetting == "maxTargetSize:")
-				setValue(nameSetting, maxTargetSize);
-			else if (nameSetting == "Time:")
-				setValue(nameSetting, time);
-			else if (nameSetting == "Level:")
-				setValue(nameSetting, level);
-		}
+		if (nameSetting == "CannonballSpeed:")
+			setValue(nameSetting, cannonballSpeed);
+		else if (nameSetting == "countTarget:")
+			setValue(nameSetting, countTarget);
+		else if (nameSetting == "minTargetSize:")
+			setValue(nameSetting, minTargetSize);
+		else if (nameSetting == "maxTargetSize:")
+			setValue(nameSetting, maxTargetSize);
+		else if (nameSetting == "Time:")
+			setValue(nameSetting, time);
+		else if (nameSetting == "Level:")
+			setValue(nameSetting, level);
+	}
 }
 
 void ParseAndStore::setValue(const std::string & key, float& value)

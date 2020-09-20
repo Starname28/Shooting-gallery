@@ -28,8 +28,6 @@ public:
 
 private:
 	void Init();
-
-private:
 	void EndDisplay(GameState gameState, const std::string& font, const std::string& inscription);
 	void ScaleText();
 	void DefaultSettingsText();
@@ -37,6 +35,8 @@ private:
 	void DrawScaleText(Render::Texture* tex, float posX, float posY, float scale);
 	void Restart();
 	void FirstCall();
+
+private:
 
 	float _timer;
 
